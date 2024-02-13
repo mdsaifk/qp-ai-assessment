@@ -20,4 +20,4 @@ python data_preprocessing.py
 python app.py 
 
 # step6:
-go to this urls and type your question from given knowledgebase  present in data folder
+Go to this url http://localhost:8000/docs#/default/ask_ask_post and type your question from given knowledgebase  in the user_qestion field  present in data folder
