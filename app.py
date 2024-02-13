@@ -44,43 +44,43 @@ def load_embeddings(persist_directory):
 class Item(BaseModel):
     user_question: str
 
-def generate_response(chat_history, user_question):
-    genai.configure(api_key="gemini api key")  # Replace 'your-api-key' with your actual API key
+# def generate_response(chat_history, user_question):
+#     genai.configure(api_key="gemini api key")  # Replace 'your-api-key' with your actual API key
 
-    generation_config = {
-        "temperature": 0,
-        "top_p": 1,
-        "top_k": 1,
-        "max_output_tokens": 256,
-    }
+#     generation_config = {
+#         "temperature": 0,
+#         "top_p": 1,
+#         "top_k": 1,
+#         "max_output_tokens": 256,
+#     }
 
-    safety_settings = [
-        {
-            "category": "HARM_CATEGORY_HARASSMENT",
-            "threshold": "BLOCK_MEDIUM_AND_ABOVE"
-        },
-        {
-            "category": "HARM_CATEGORY_HATE_SPEECH",
-            "threshold": "BLOCK_MEDIUM_AND_ABOVE"
-        },
-        {
-            "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
-            "threshold": "BLOCK_MEDIUM_AND_ABOVE"
-        },
-        {
-            "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
-            "threshold": "BLOCK_MEDIUM_AND_ABOVE"
-        }
-    ]
+#     safety_settings = [
+#         {
+#             "category": "HARM_CATEGORY_HARASSMENT",
+#             "threshold": "BLOCK_MEDIUM_AND_ABOVE"
+#         },
+#         {
+#             "category": "HARM_CATEGORY_HATE_SPEECH",
+#             "threshold": "BLOCK_MEDIUM_AND_ABOVE"
+#         },
+#         {
+#             "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+#             "threshold": "BLOCK_MEDIUM_AND_ABOVE"
+#         },
+#         {
+#             "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
+#             "threshold": "BLOCK_MEDIUM_AND_ABOVE"
+#         }
+#     ]
 
-    model = genai.GenerativeModel(model_name="gemini-pro",
-                                  generation_config=generation_config,safety_settings=safety_settings)
+#     model = genai.GenerativeModel(model_name="gemini-pro",
+#                                   generation_config=generation_config,safety_settings=safety_settings)
 
-    prompt1_1 = f"Given the following last conversation log, if user question is related to previous user question then formulate a question that would be the most relevant to provide the user with an answer otherwise don't formulate question leave it as it is.\n\nCONVERSATION LOG: \n{chat_history}\n\nuser question: {user_question}\n\nRefined user question :"
+    # prompt1_1 = f"Given the following last conversation log, if user question is related to previous user question then formulate a question that would be the most relevant to provide the user with an answer otherwise don't formulate question leave it as it is.\n\nCONVERSATION LOG: \n{chat_history}\n\nuser question: {user_question}\n\nRefined user question :"
     
-    prompt_parts = [prompt1_1,]
-    response = model.generate_content(prompt_parts)
-    return response.text
+    # prompt_parts = [prompt1_1,]
+    # response = model.generate_content(prompt_parts)
+    # return response.text
 
 chat_history = ["","","",""]
 @app.post("/ask", response_model=Union[dict, None])
@@ -89,9 +89,7 @@ async def ask(request: Request, item: Item):
     user_question = item.user_question
     doc_with_embedding = load_embeddings(persist_directory)
 
-    chat_history2 = chat_history[-2]
     # new_query = user_question
-    new_query = generate_response(chat_history2,user_question)
     retriever = doc_with_embedding.as_retriever(search_type="similarity", search_kwargs={"k":3})
     llm = ChatOpenAI(model_name="gpt-3.5-turbo-1106", openai_api_key = api_key,temperature=0)  
     memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
@@ -104,14 +102,14 @@ async def ask(request: Request, item: Item):
         prompt2 = f"""You're a helpful, respectful, and honest assistant. 
             Answer the user question truthfully and shortly using the provided context and rephrase it better. If the answer is not in the context,just say I don't know the answer
             and avoid creating the answer by yourself.\n\n
-            Question: {new_query}\n\n"""
+            Question: {user_question}\n\n"""
         
         
         result = qa({"query": prompt2, "chat_history": chat_history})
         response_text = result["result"]
-        chat_history.extend(('user_question:' + new_query, 'Assistant :' + response_text))
-        print(cb)
-    return {"response": response_text,'refined_query': new_query}
+        chat_history.extend(('user_question:' + user_question, 'Assistant :' + response_text))
+        # print(cb)
+    return {"response": response_text}
 
 if __name__ == '__main__':
     uvicorn.run(app)
