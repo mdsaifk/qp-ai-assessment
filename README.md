@@ -10,7 +10,7 @@ activate the environment .
 pip install -r requirements.txt
 
 # step3:
-Add your geminiapi and openai api in there repective places , .env  file.
+Add your openai api in there repective places , .env  file.
 
 # step4 :
 If you want to add more files you can add into Data folder and then run
